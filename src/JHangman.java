@@ -21,18 +21,18 @@ public class JHangman {
 		word = w;
 	}
 	
-	public static void main(String argv[])
+	public static void main(String... args) // String argv[]
 		throws java.lang.Exception {
 		
-		if (argv.length == 0) {
+		if (args.length == 0) {
 			throw new java.lang.Exception();
 		}
 		
-		if (argv[0] == "") {
+		if (args[0] == "") {
 			throw new java.lang.Exception();
 		}
 		
-		final JHangman myInstance = new JHangman(argv[0]);
+		final JHangman myInstance = new JHangman(args[0]);
 		
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		String inp;

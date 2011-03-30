@@ -1,13 +1,37 @@
 import org.junit.*;
+import java.io.*;
 import static org.junit.Assert.*;
 
 import java.util.*;
   
 public class JHangmanTest {
 
+	// writing the sysout to an output stream means
+	// i can test the output directly, rather than having to call
+	// a separate getStatus method to test that my code
+	// has had the required effect (e.g. changing the status)
+	
+	// BUT what does this mean for people using the class in another
+	// non-command-line application?
+	private static final String EOL = System.getProperty("line.separator");
+	private ByteArrayOutputStream bytes;
+	private PrintStream console;
+
+	@Before
+	public void setUp() {
+		bytes = new ByteArrayOutputStream();
+		console = System.out;
+		System.setOut(new PrintStream(bytes));
+	}
+
+	@After
+	public void tearDown() {
+		System.setOut(console);
+	}
+
 	@Test(expected=Exception.class)
 	public void testExceptionIfNoWordSupplied() throws Exception {
-		JHangman.main(new String[] { "" });
+		JHangman.main("");
 	}
 	
 	@Test
@@ -31,10 +55,11 @@ public class JHangmanTest {
 	@Test
 	public void testIncorrectGuessIncrementsTryCount() {
 		JHangman jHangman = new JHangman("testing");
+		
 		jHangman.tryLetter('x');
-		assertEquals("1 try", jHangman.getStatus());
-		jHangman.tryLetter('y');
-		assertEquals("2 tries", jHangman.getStatus());
+		assertEquals(String.format("???????%n1 try%n", EOL, EOL), bytes.toString());
+		jHangman.tryLetter('x');
+		assertEquals(String.format("???????%n1 try%n2 tries%n", EOL, EOL, EOL), bytes.toString());
 	}
 	
 	@Test
@@ -44,7 +69,7 @@ public class JHangmanTest {
 		jHangman.tryLetter('y');
 		jHangman.tryLetter('z');
 		jHangman.tryLetter('p');
-		assertEquals("game over", jHangman.getStatus());
+		assertEquals(String.format("???????%n1 try%n2 tries%ngame over%ngame over%n", EOL, EOL, EOL, EOL, EOL), bytes.toString());
 	}
 	
 	@Test
@@ -56,7 +81,7 @@ public class JHangmanTest {
 		jHangman.tryLetter('i');
 		jHangman.tryLetter('n');
 		jHangman.tryLetter('g');
-		assertEquals("you win", jHangman.getStatus());
+		assertEquals(String.format("???????%n0 tries%n0 tries%n0 tries%n0 tries%n0 tries%nyou win%n", EOL, EOL, EOL, EOL, EOL, EOL, EOL), bytes.toString());
 	}
 	
 }
