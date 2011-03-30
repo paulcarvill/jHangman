@@ -7,71 +7,58 @@ public class JHangman {
 	private static String status;
 	private static int numberOfTries;
 	private static int MAX_NUMBER_OF_TRIES = 3;
+	private static String errorMessage;
 	
-	// constructor
-	JHangman(String w) {
-		word = w;
-		workingWord = obfuscateWord();
+	JHangman() {
 		numberOfTries = 0;
 		status = "";
-		System.out.println(workingWord);
 	}
 	
-	public void setWord(String w) {
+	private static void setWord(String w) {
 		word = w;
 	}
 	
-	public static void main(String... args) // String argv[]
-		throws java.lang.Exception {
-		
+	private static boolean validateSetupArgs(String[] args) {
 		if (args.length == 0) {
-			throw new java.lang.Exception();
+			errorMessage = "You need to supply a single argument — the word to play the game with";
+			return false;
 		}
 		
-		if (args[0] == "") {
-			throw new java.lang.Exception();
+		else if (args[0] == "") {
+			errorMessage = "You need to supply a word of at least one letter";
+			return false;
 		}
 		
-		final JHangman myInstance = new JHangman(args[0]);
-		
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		String inp;
-		char letter;
-		
-		while(myInstance.getStatus() != "you win" & myInstance.getStatus() != "game over") {
-			try {
-				inp = br.readLine();
-				try {
-					letter = inp.charAt(0);
-				}
-				catch (StringIndexOutOfBoundsException oobe) {
-					System.out.println("Oops, enter a character, please!");
-					continue;
-				}
-				myInstance.tryLetter(letter);
-				System.out.println(myInstance.getWorkingWord());
-			} 
-			catch (IOException ioe) {
-				System.out.println("IO error trying to read your name!");
-				System.exit(1);
-			}
+		else if (args.length > 1) {
+			errorMessage = "You only need to suply one word, with no spaces";
+			return false;
 		}
-		System.out.println("The word was " + word + "!");
+		return true;
 	}
 	
-	private String obfuscateWord() {
+	public static void init(String... args) {
+		if(validateSetupArgs(args)) {
+			setWord(args[0]);
+			obfuscateWord();
+		}
+		else {
+			throw new IllegalArgumentException(errorMessage);
+		}
+	}
+
+	private static void obfuscateWord() {
 		String j = "";
 		for (int i = 0; i < word.length(); i++) {
 			j += "?";
 		}
-		return j;
+		workingWord = j;
 	}
 	
 	public static String getWorkingWord() {
 		return workingWord;
 	}
 	
-	public static String replaceCharAt(String s, int pos, char c) {
+	private static String replaceCharAt(String s, int pos, char c) {
 		StringBuffer buf = new StringBuffer( s );
 		buf.setCharAt( pos, c );
 		return buf.toString( );
@@ -112,12 +99,53 @@ public class JHangman {
 			message = " tries";
 			status = Integer.toString(numberOfTries) + message;
 		}
-		System.out.println(status);
 	}
 	
 	public static String getStatus() {
 		return status;
 	}
 
+	public static void main(String... args) {
+		
+		if(!validateSetupArgs(args)) {
+			System.out.println(errorMessage);
+			return;
+		}
+		
+		final JHangman myInstance = new JHangman();
+		myInstance.init(args);
+
+		System.out.println(myInstance.getWorkingWord());
+		
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		String userInput;
+		char letter;
+		
+		while(myInstance.getStatus() != "you win" & myInstance.getStatus() != "game over") {
+			try {
+				userInput = br.readLine();
+				try {
+					letter = userInput.charAt(0);
+					System.out.println("letter " + letter);
+				}
+				catch (StringIndexOutOfBoundsException oobe) {
+					System.out.println("Oops, enter a character, please!");
+					continue;
+				}
+				myInstance.tryLetter(letter);
+				System.out.println(myInstance.getStatus());
+				System.out.println(myInstance.getWorkingWord());
+			} 
+			catch (IOException ioe) {
+				System.out.println("IO error trying to read your name!");
+				System.exit(1);
+			}
+			catch (NullPointerException np) {
+				System.out.println("aaaaaaaathghhg!");
+				System.exit(1);
+			}
+		}
+		System.out.println("The word was " + word + "!");
+	}
 }
 

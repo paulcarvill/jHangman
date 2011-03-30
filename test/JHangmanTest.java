@@ -6,22 +6,17 @@ import java.util.*;
   
 public class JHangmanTest {
 
-	// writing the sysout to an output stream means
-	// i can test the output directly, rather than having to call
-	// a separate getStatus method to test that my code
-	// has had the required effect (e.g. changing the status)
-	
-	// BUT what does this mean for people using the class in another
-	// non-command-line application?
 	private static final String EOL = System.getProperty("line.separator");
 	private ByteArrayOutputStream bytes;
 	private PrintStream console;
+	private JHangman jHangman;
 
 	@Before
 	public void setUp() {
 		bytes = new ByteArrayOutputStream();
 		console = System.out;
 		System.setOut(new PrintStream(bytes));
+		jHangman = new JHangman();
 	}
 
 	@After
@@ -30,22 +25,33 @@ public class JHangmanTest {
 	}
 
 	@Test(expected=Exception.class)
-	public void testExceptionIfNoWordSupplied() throws Exception {
-		JHangman.main("");
+	public void testErrorIfNoWordSupplied() throws IllegalArgumentException {
+		jHangman.init();
+	}
+	
+	@Test(expected=Exception.class)
+	public void testErrorIfTooManyArgumentsSupplied() throws IllegalArgumentException {
+		jHangman.init("one", "two", "three");
+	}
+	
+	@Test(expected=Exception.class)
+	public void testErrorIfSinlgeEmptyArgumentSupplied() throws IllegalArgumentException {
+		jHangman.init("");
 	}
 	
 	@Test
 	public void testSuppliedWordIsObfuscatedCorrectly()  {
-		JHangman jHangman = new JHangman("testing");
+		jHangman.init("testing");
 		assertEquals("???????", jHangman.getWorkingWord());
 		
-		JHangman anotherHangman = new JHangman("anothertest");
+		JHangman anotherHangman = new JHangman();
+		jHangman.init("anothertest");
 		assertEquals("???????????", anotherHangman.getWorkingWord());
 	}
 	
 	@Test
 	public void testWePopulateWordWithCorrectlyGuessedLetters() {
-		JHangman jHangman = new JHangman("testing");
+		jHangman.init("testing");
 		jHangman.tryLetter('t');
 		assertEquals("t??t???", jHangman.getWorkingWord());
 		jHangman.tryLetter('g');
@@ -54,41 +60,58 @@ public class JHangmanTest {
 	
 	@Test
 	public void testIncorrectGuessIncrementsTryCount() {
-		JHangman jHangman = new JHangman("testing");
-		
+		jHangman.init("testing");
 		jHangman.tryLetter('x');
-		assertEquals(String.format("???????%n1 try%n", EOL, EOL), bytes.toString());
+		assertEquals("1 try", jHangman.getStatus());
 		jHangman.tryLetter('x');
-		assertEquals(String.format("???????%n1 try%n2 tries%n", EOL, EOL, EOL), bytes.toString());
+		assertEquals("2 tries", jHangman.getStatus());
 	}
 	
 	@Test
 	public void testGameOverIfMaxTriesReached() {
-		JHangman jHangman = new JHangman("testing");
+		jHangman.init("testing");
 		jHangman.tryLetter('x');
 		jHangman.tryLetter('y');
 		jHangman.tryLetter('z');
 		jHangman.tryLetter('p');
-		assertEquals(String.format("???????%n1 try%n2 tries%ngame over%ngame over%n", EOL, EOL, EOL, EOL, EOL), bytes.toString());
+		assertEquals("game over", jHangman.getStatus());
 	}
 	
 	@Test
 	public void testGameWonIfwordGuessed() {
-		JHangman jHangman = new JHangman("testing");
+		jHangman.init("testing");
 		jHangman.tryLetter('t');
 		jHangman.tryLetter('e');
 		jHangman.tryLetter('s');
 		jHangman.tryLetter('i');
 		jHangman.tryLetter('n');
 		jHangman.tryLetter('g');
-		assertEquals(String.format("???????%n0 tries%n0 tries%n0 tries%n0 tries%n0 tries%nyou win%n", EOL, EOL, EOL, EOL, EOL, EOL, EOL), bytes.toString());
+		assertEquals("you win", jHangman.getStatus());
 	}
 	
+	@Test
+	public void testInvalidExecuteFromMain() {
+		JHangman.main();
+		assertEquals("You need to supply a single argument — the word to play the game with"  + EOL, bytes.toString());
+	}
+	
+	@Test
+	public void testExecuteFromMain() {
+		InputStream stdin = System.in;
+
+		String s = "y" + EOL + "z" + EOL + "x" + EOL;
+		System.setIn(new ByteArrayInputStream(s.getBytes()));
+
+		JHangman.main("testing");
+		System.setIn(stdin);
+		
+		assertEquals("???????"  + EOL + "letter y" + EOL + "1 try" + EOL + 
+			"???????" + EOL + "letter z" + EOL + "2 tries" + EOL + "???????" + EOL + "letter x" + EOL + 
+				"game over" + EOL + "???????" + EOL + "The word was testing!" + EOL, bytes.toString());
+	}
+	
+	
+	
 }
-
-
-
-
-
 
 
